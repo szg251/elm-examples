@@ -7,8 +7,8 @@
     "build": "webpack",
     "watch": "webpack --watch",
     "api": "node ./api/index.js",
-    "client": "webpack-dev-server",
-    "dev": "nf start",
+    "client": "webpack-dev-server --open",
+    "dev": "concurrently -n api,client -c red,blue 'npm run api' 'npm run client'",
     "dev:api": "nodemon ./api/index.js --ignore ./api/todos.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -16,11 +16,11 @@
   "license": "ISC",
   "devDependencies": {
     "clean-webpack-plugin": "^0.1.18",
+    "concurrently": "^3.5.1",
     "css-loader": "^0.28.10",
     "elm-webpack-loader": "^4.4.0",
     "express": "^4.16.2",
     "file-loader": "^1.1.10",
-    "foreman": "^2.0.0",
     "fs-extra": "^5.0.0",
     "html-webpack-plugin": "^2.30.1",
     "nodemon": "^1.17.1",
