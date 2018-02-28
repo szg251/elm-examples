@@ -1,4 +1,4 @@
-module Hello exposing (..)
+module App exposing (..)
 
 import Html
 import Html.Styled exposing (..)
