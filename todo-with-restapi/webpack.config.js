@@ -4,7 +4,10 @@ const HtmlWebpackPlugin     = require('html-webpack-plugin');
 const UglifyJSWebpackPlugin = require('uglifyjs-webpack-plugin');
 
 const cleanPlugin    = new CleanWebpackPlugin('dist');
-const htmlPlugin     = new HtmlWebpackPlugin({title : 'Todo App', template : 'src/index.html'});
+const htmlPlugin     = new HtmlWebpackPlugin({
+    title : 'Todo App',
+    template : 'src/index.html'
+});
 const uglifyjsPlugin = new UglifyJSWebpackPlugin();
 
 const isProduction = process.env.NODE_ENV === 'production';

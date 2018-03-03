@@ -56,7 +56,7 @@ update msg model =
                     let
                         ( newtodos, cmd ) =
                             updateTodos todoMsg todos
-                                |> Tuple.mapFirst RemoteData.Success
+                                |> Tuple.mapFirst RemoteData.succeed
                     in
                         ( { model | todos = newtodos }, cmd )
 
@@ -80,7 +80,7 @@ updateApi msg model =
                         newtodos =
                             List.Extra.updateIf (\t -> t.id == oldId) updateId todos
                     in
-                        { model | todos = RemoteData.Success newtodos }
+                        { model | todos = RemoteData.succeed newtodos }
 
         AfterDeleteTodo todo ->
             model
