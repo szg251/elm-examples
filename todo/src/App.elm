@@ -8,16 +8,11 @@ import List.Extra exposing (updateIf)
 import Style
 
 
-main =
-    beginnerProgram { model = model, view = view, update = update }
-
-
-
 -- MODEL
 
 
 type alias Todo =
-    { index : Int
+    { key : Int
     , word : String
     , done : Bool
     }
@@ -37,7 +32,7 @@ model =
 
 
 
--- UPDATE
+-- MESSAGES
 
 
 type Msg
@@ -45,6 +40,10 @@ type Msg
     | SubmitTodo
     | DelTodo Int
     | ToggleTodo Int
+
+
+
+-- UPDATE
 
 
 update : Msg -> Model -> Model
@@ -57,23 +56,26 @@ update msg model =
             let
                 newtodo : Todo
                 newtodo =
-                    { index = uniqueId (List.map .index model.todos)
+                    { key = uniqueId (List.map .key model.todos)
                     , word = model.newtodo
                     , done = False
                     }
             in
-                { model | newtodo = "", todos = newtodo :: model.todos }
+                { model
+                    | newtodo = ""
+                    , todos = newtodo :: model.todos
+                }
 
-        DelTodo index ->
-            { model | todos = List.filter (\todo -> todo.index /= index) model.todos }
+        DelTodo key ->
+            { model | todos = List.filter (\todo -> todo.key /= key) model.todos }
 
-        ToggleTodo index ->
+        ToggleTodo key ->
             let
                 toggleTodo : Todo -> Todo
                 toggleTodo todo =
                     { todo | done = not todo.done }
             in
-                { model | todos = List.Extra.updateIf (\n -> n.index == index) toggleTodo model.todos }
+                { model | todos = List.Extra.updateIf (\n -> n.key == key) toggleTodo model.todos }
 
 
 uniqueId : List Int -> Int
@@ -96,15 +98,15 @@ uniqueId list =
 view : Model -> Html Msg
 view model =
     div []
-        [ header model
+        [ viewHeader model
         , div [ Style.container ]
-            [ todoList model.todos ]
-        , footer
+            [ viewTodoList model.todos ]
+        , viewFooter
         ]
 
 
-header : Model -> Html Msg
-header model =
+viewHeader : Model -> Html Msg
+viewHeader model =
     div [ Style.nav ]
         [ div [ Style.nav__container ]
             [ div [ Style.nav__title ] [ text "Todo App" ]
@@ -125,36 +127,41 @@ header model =
         ]
 
 
-todoList : List Todo -> Html Msg
-todoList list =
+viewTodoList : List Todo -> Html Msg
+viewTodoList list =
     div []
         [ h1 [] [ text "Todo list" ]
-        , ul [] (List.map listElem list)
+        , ul [] (List.map viewListElem list)
         ]
 
 
-listElem : Todo -> Html Msg
-listElem { index, word, done } =
+viewListElem : Todo -> Html Msg
+viewListElem { key, word, done } =
     li [ Style.todo__li ]
         [ input
             [ Style.todo__chkbox
             , type_ "checkbox"
             , checked done
-            , onClick (ToggleTodo index)
+            , onClick (ToggleTodo key)
             ]
             []
         , div [] [ text word ]
         , button
             [ Style.form__btn
             , Style.flex__right
-            , onClick (DelTodo index)
+            , onClick (DelTodo key)
             , disabled (not done)
             ]
             [ text "Delete" ]
         ]
 
 
-footer : Html Msg
-footer =
+viewFooter : Html Msg
+viewFooter =
     div [ Style.footer ]
         [ text "Copyright (C) 2018 Yahoo Japan Corporation. All Rights Reserved." ]
+
+
+main : Program Never Model Msg
+main =
+    beginnerProgram { model = model, view = view, update = update }
