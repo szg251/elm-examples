@@ -45,7 +45,6 @@ app.put('/todo', (req, res) => {
     id,
     value: req.body.value,
     done: false,
-    order: req.body.order
   })
 
   const generateUniqueId = (values = []) => {
@@ -57,7 +56,7 @@ app.put('/todo', (req, res) => {
     .then(todos => {
       const newTodo = mkTodo( generateUniqueId(todos.map(todo => todo.id)) )
 
-      fs.writeJson(path.resolve(__dirname, 'todos.json'), [ ...todos, newTodo ])
+      fs.writeJson(path.resolve(__dirname, 'todos.json'), [ newTodo, ...todos ])
       res.send(JSON.stringify(newTodo, null, 3))
     })
     .catch(err => {

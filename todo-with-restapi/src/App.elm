@@ -6,8 +6,6 @@ import Html.Styled.Attributes exposing (..)
 import Html.Styled.Events exposing (onInput, onClick, onSubmit)
 import RemoteData exposing (WebData, toMaybe)
 import List.Extra exposing (updateIf)
-import Dict exposing (Dict)
-import Dict.Extra
 import Style
 import Utils exposing (..)
 import Model exposing (..)
@@ -30,95 +28,98 @@ init =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        InputTodo newtodo ->
+        InputTodoField newtodo ->
             ( { model | newtodo = newtodo }, Cmd.none )
 
-        SubmitTodo ->
+        SubmitTodo newtodo ->
+            let
+                ( newtodos, cmd ) =
+                    case RemoteData.toMaybe model.todos of
+                        Nothing ->
+                            ( model.todos, Cmd.none )
+
+                        Just todos ->
+                            updateTodos (SaveTodo newtodo) todos
+                                |> Tuple.mapFirst (RemoteData.succeed)
+            in
+                ( { model | newtodo = "", todos = newtodos }, cmd )
+
+        ApiMsg apiMsg ->
+            ( updateApi apiMsg model, Cmd.none )
+
+        TodoMsg todoMsg ->
             case RemoteData.toMaybe model.todos of
                 Nothing ->
                     ( model, Cmd.none )
 
                 Just todos ->
                     let
-                        newtodo =
-                            { id = uniqueId (Dict.keys todos)
-                            , value = model.newtodo
-                            , done = False
-                            , order = Dict.size todos
-                            }
-
-                        newtodos =
-                            Dict.insert newtodo.id newtodo todos
+                        ( newtodos, cmd ) =
+                            updateTodos todoMsg todos
+                                |> Tuple.mapFirst RemoteData.Success
                     in
-                        ( { model | newtodo = "", todos = RemoteData.Success newtodos }
-                        , putNewTodo newtodo
-                        )
+                        ( { model | todos = newtodos }, cmd )
 
-        DelTodo id ->
-            case RemoteData.toMaybe model.todos of
-                Nothing ->
-                    ( model, Cmd.none )
 
-                Just todos ->
-                    let
-                        newtodos =
-                            Dict.remove id todos
-                    in
-                        ( { model | todos = RemoteData.Success newtodos }, deleteTodo id )
-
-        ToggleTodo id ->
-            case RemoteData.toMaybe model.todos of
-                Nothing ->
-                    ( model, Cmd.none )
-
-                Just todos ->
-                    let
-                        newtodo =
-                            Dict.get id todos
-                                |> Maybe.map toggleTodo
-
-                        toggleTodo todo =
-                            { todo | done = not todo.done }
-                    in
-                        case newtodo of
-                            Nothing ->
-                                ( model, Cmd.none )
-
-                            Just todo ->
-                                ( { model
-                                    | todos =
-                                        todos
-                                            |> Dict.insert id todo
-                                            |> RemoteData.Success
-                                  }
-                                , patchTodo todo
-                                )
-
+updateApi : ApiMsg -> Model -> Model
+updateApi msg model =
+    case msg of
         AfterFetchTodos response ->
-            ( { model | todos = RemoteData.map (Dict.Extra.fromListBy .id) response }, Cmd.none )
+            { model | todos = response }
 
         AfterPutNewTodo oldId response ->
             case RemoteData.toMaybe (RemoteData.map2 (,) model.todos response) of
                 Nothing ->
-                    ( model, Cmd.none )
+                    model
 
                 Just ( todos, newtodo ) ->
                     let
-                        setId todo =
+                        updateId todo =
                             { todo | id = newtodo.id }
 
                         newtodos =
-                            todos
-                                |> Dict.remove oldId
-                                |> Dict.insert newtodo.id newtodo
+                            List.Extra.updateIf (\t -> t.id == oldId) updateId todos
                     in
-                        ( { model | todos = RemoteData.Success newtodos }, Cmd.none )
+                        { model | todos = RemoteData.Success newtodos }
 
         AfterDeleteTodo todo ->
-            ( model, Cmd.none )
+            model
 
         AfterPatchTodo todo ->
-            ( model, Cmd.none )
+            model
+
+
+updateTodos : TodoMsg -> List Todo -> ( List Todo, Cmd Msg )
+updateTodos msg todos =
+    case msg of
+        SaveTodo newvalue ->
+            let
+                newtodo =
+                    { id = uniqueId (List.map .id todos)
+                    , value = newvalue
+                    , done = False
+                    }
+            in
+                ( newtodo :: todos, putNewTodo newtodo )
+
+        DelTodo id ->
+            ( List.filter (\t -> t.id /= id) todos, deleteTodo id )
+
+        ToggleTodo id ->
+            let
+                newtodo =
+                    List.Extra.find (\t -> t.id == id) todos
+                        |> Maybe.map toggleTodo
+
+                toggleTodo todo =
+                    { todo | done = not todo.done }
+            in
+                case newtodo of
+                    Nothing ->
+                        ( todos, Cmd.none )
+
+                    Just todo ->
+                        ( List.Extra.replaceIf (\t -> t.id == id) todo todos, patchTodo todo )
 
 
 
@@ -137,27 +138,30 @@ subscriptions model =
 view : Model -> Html Msg
 view model =
     div []
-        [ header model
+        [ viewHeader model
         , div [ Style.container ]
             [ h1 [] [ text "Todo list" ]
-            , todoList model.todos
+            , viewTodoList model.todos
             ]
-        , footer
+        , viewFooter
         ]
 
 
-header : Model -> Html Msg
-header model =
+viewHeader : Model -> Html Msg
+viewHeader model =
     div [ Style.nav ]
         [ div [ Style.nav__container ]
             [ div [ Style.nav__title ] [ text "Todo App" ]
-            , Html.Styled.form [ Style.form, onSubmit SubmitTodo ]
+            , Html.Styled.form
+                [ Style.form
+                , onSubmit (SubmitTodo model.newtodo)
+                ]
                 [ input
                     [ Style.form__txt
                     , type_ "text"
                     , placeholder "todo"
                     , value model.newtodo
-                    , onInput InputTodo
+                    , onInput InputTodoField
                     ]
                     []
                 , button
@@ -168,8 +172,8 @@ header model =
         ]
 
 
-todoList : WebData (Dict String Todo) -> Html Msg
-todoList todos =
+viewTodoList : WebData (List Todo) -> Html Msg
+viewTodoList todos =
     case todos of
         RemoteData.NotAsked ->
             text "Initializing..."
@@ -178,45 +182,40 @@ todoList todos =
             text "Loading..."
 
         RemoteData.Success list ->
-            case Dict.size list of
+            case List.length list of
                 0 ->
                     text "No items."
 
                 otherwise ->
-                    ul []
-                        (list
-                            |> Dict.values
-                            |> List.sortBy .order
-                            |> List.map listElem
-                        )
+                    ul [] (List.map viewListElem list)
 
         RemoteData.Failure error ->
             text "Could not fetch todos."
 
 
-listElem : Todo -> Html Msg
-listElem { id, value, done } =
+viewListElem : Todo -> Html Msg
+viewListElem todo =
     li [ Style.todo__li ]
         [ input
             [ Style.todo__chkbox
             , type_ "checkbox"
-            , checked done
-            , onClick (ToggleTodo id)
+            , checked todo.done
+            , onClick (TodoMsg << ToggleTodo <| todo.id)
             ]
             []
-        , div [] [ text value ]
+        , div [] [ text todo.value ]
         , button
             [ Style.form__btn
             , Style.flex__right
-            , onClick (DelTodo id)
-            , disabled (not done)
+            , onClick (TodoMsg << DelTodo <| todo.id)
+            , disabled (not todo.done)
             ]
             [ text "Delete" ]
         ]
 
 
-footer : Html Msg
-footer =
+viewFooter : Html Msg
+viewFooter =
     div [ Style.footer ]
         [ text "Copyright (C) 2018 Yahoo Japan Corporation. All Rights Reserved." ]
 
