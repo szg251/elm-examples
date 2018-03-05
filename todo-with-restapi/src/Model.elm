@@ -4,7 +4,6 @@ import RemoteData exposing (WebData)
 import Json.Decode as Decode
 import Json.Decode.Pipeline as P
 import Json.Encode as Encode
-import Dict exposing (Dict)
 
 
 -- MODEL
@@ -14,20 +13,19 @@ type alias Todo =
     { id : String
     , value : String
     , done : Bool
-    , order : Int
     }
 
 
 type alias Model =
     { newtodo : String
-    , todos : WebData (Dict String Todo)
+    , todos : WebData (List Todo)
     }
 
 
 initialModel : Model
 initialModel =
     { newtodo = ""
-    , todos = RemoteData.Loading
+    , todos = RemoteData.NotAsked
     }
 
 
@@ -46,7 +44,6 @@ todoDecoder =
         |> P.required "id" Decode.string
         |> P.required "value" Decode.string
         |> P.required "done" Decode.bool
-        |> P.required "order" Decode.int
 
 
 
@@ -60,7 +57,6 @@ todoEncoder todo =
             [ ( "id", Encode.string todo.id )
             , ( "value", Encode.string todo.value )
             , ( "done", Encode.bool todo.done )
-            , ( "order", Encode.int todo.order )
             ]
     in
         Encode.object attributes
@@ -68,8 +64,4 @@ todoEncoder todo =
 
 idEncoder : String -> Encode.Value
 idEncoder todoId =
-    let
-        attributes =
-            [ ( "id", Encode.string todoId ) ]
-    in
-        Encode.object attributes
+    Encode.object [ ( "id", Encode.string todoId ) ]

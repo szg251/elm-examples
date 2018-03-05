@@ -1,15 +1,29 @@
 # Elm examples
 
-Elm を使ったSPA
+A few simple applications written in Elm.
 
-## Todo app
+## Todo App
+
+A simple todo application
 
 `/todo`
 
-シンプルなアップ、Todoを追加したり、チェックしたり、削除したりできます。   
-@smukai の frontend-training を元に作られています。
+### Get started
+
+Run the project with `elm-reactor` or `elm-live ./src/App.elm`.
+
+---
+
+## Todo App with REST Api
+
+`/todo-with-restapi`
+
+The same application as above with a few upgrades:
+- fetching and saving data to a REST Api
+- webpack bundling
+- tests
 
 ### Get started
 
-`elm-install`
-`elm-reactor`
+`npm install`  
+`npm run dev`
