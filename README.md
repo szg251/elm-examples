@@ -8,6 +8,10 @@ Simplest todo application without any styling.
 
 `/minimalist-todo`
 
+### Get started
+
+Run the project with `elm-reactor` or `elm-live ./src/App.elm`.
+
 ## Todo App
 
 A simple todo application, with elm-css
@@ -17,8 +21,6 @@ A simple todo application, with elm-css
 ### Get started
 
 Run the project with `elm-reactor` or `elm-live ./src/App.elm`.
-
----
 
 ## Todo App with REST Api
 
