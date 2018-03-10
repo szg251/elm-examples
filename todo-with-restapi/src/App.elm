@@ -28,107 +28,89 @@ init =
 update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
-        InputTodoField newtodo ->
-            ( { model | newtodo = newtodo }, Cmd.none )
+        NoOp ->
+            model ! [ Cmd.none ]
 
-        SubmitTodo newtodo ->
+        InputTodoField newtodo ->
+            { model | newtodo = newtodo } ! [ Cmd.none ]
+
+        SubmitTodo newvalue ->
             let
                 ( newtodos, cmd ) =
-                    case RemoteData.toMaybe model.todos of
-                        Nothing ->
-                            ( model.todos, Cmd.none )
+                    RemoteData.update addTodo model.todos
 
-                        Just todos ->
-                            updateTodos (SaveTodo newtodo) todos
-                                |> Tuple.mapFirst (RemoteData.succeed)
-            in
-                ( { model | newtodo = "", todos = newtodos }, cmd )
-
-        ApiMsg apiMsg ->
-            ( updateApi apiMsg model, Cmd.none )
-
-        TodoMsg todoMsg ->
-            case RemoteData.toMaybe model.todos of
-                Nothing ->
-                    ( model, Cmd.none )
-
-                Just todos ->
+                addTodo : List Todo -> ( List Todo, Cmd Msg )
+                addTodo todos =
                     let
-                        ( newtodos, cmd ) =
-                            updateTodos todoMsg todos
-                                |> Tuple.mapFirst RemoteData.succeed
+                        newtodo =
+                            { id = uniqueId (List.map .id todos)
+                            , value = newvalue
+                            , done = False
+                            }
                     in
-                        ( { model | todos = newtodos }, cmd )
-
-
-updateApi : ApiMsg -> Model -> Model
-updateApi msg model =
-    case msg of
-        AfterFetchTodos response ->
-            { model | todos = response }
-
-        AfterPutNewTodo oldId response ->
-            case RemoteData.toMaybe (RemoteData.map2 (,) model.todos response) of
-                Nothing ->
-                    model
-
-                Just ( todos, newtodo ) ->
-                    let
-                        updateId todo =
-                            { todo | id = newtodo.id }
-
-                        newtodos =
-                            List.Extra.updateIf (\t -> t.id == oldId) updateId todos
-                    in
-                        { model | todos = RemoteData.succeed newtodos }
-
-        AfterDeleteTodo todo ->
-            model
-
-        AfterPatchTodo todo ->
-            model
-
-
-updateTodos : TodoMsg -> List Todo -> ( List Todo, Cmd Msg )
-updateTodos msg todos =
-    case msg of
-        SaveTodo newvalue ->
-            let
-                newtodo =
-                    { id = uniqueId (List.map .id todos)
-                    , value = newvalue
-                    , done = False
-                    }
+                        (newtodo :: todos)
+                            ! [ putNewTodo newtodo ]
             in
-                ( newtodo :: todos, putNewTodo newtodo )
+                { model | todos = newtodos, newtodo = "" } ! [ cmd ]
 
         DelTodo id ->
-            ( List.filter (\t -> t.id /= id) todos, deleteTodo id )
+            let
+                ( newtodos, cmd ) =
+                    RemoteData.update delTodo model.todos
+
+                delTodo : List Todo -> ( List Todo, Cmd Msg )
+                delTodo todos =
+                    List.filter (\t -> t.id /= id) todos
+                        ! [ deleteTodo id ]
+            in
+                { model | todos = newtodos } ! [ cmd ]
 
         ToggleTodo id ->
             let
-                newtodo =
-                    List.Extra.find (\t -> t.id == id) todos
-                        |> Maybe.map toggleTodo
+                ( newtodos, cmd ) =
+                    RemoteData.update toggleTodo model.todos
 
-                toggleTodo todo =
-                    { todo | done = not todo.done }
+                toggleTodo : List Todo -> ( List Todo, Cmd Msg )
+                toggleTodo todos =
+                    let
+                        newtodo =
+                            List.Extra.find (\t -> t.id == id) todos
+                                |> Maybe.map (\t -> { t | done = not t.done })
+                    in
+                        case newtodo of
+                            Nothing ->
+                                todos ! [ Cmd.none ]
+
+                            Just todo ->
+                                List.Extra.replaceIf (\t -> t.id == id) todo todos
+                                    ! [ patchTodo todo ]
             in
-                case newtodo of
-                    Nothing ->
-                        ( todos, Cmd.none )
+                { model | todos = newtodos } ! [ cmd ]
 
-                    Just todo ->
-                        ( List.Extra.replaceIf (\t -> t.id == id) todo todos, patchTodo todo )
+        AfterFetchTodos response ->
+            { model | todos = response }
+                ! [ Cmd.none ]
 
+        AfterPutNewTodo oldId response ->
+            case RemoteData.toMaybe response of
+                Nothing ->
+                    model ! [ Cmd.none ]
 
+                Just newtodo ->
+                    let
+                        ( newtodos, cmd ) =
+                            RemoteData.update amendId model.todos
 
--- SUBSCRIPTIONS
-
-
-subscriptions : Model -> Sub Msg
-subscriptions model =
-    Sub.none
+                        amendId : List Todo -> ( List Todo, Cmd Msg )
+                        amendId todos =
+                            let
+                                updateId todo =
+                                    { todo | id = newtodo.id }
+                            in
+                                List.Extra.updateIf (\t -> t.id == oldId) updateId todos
+                                    ! [ Cmd.none ]
+                    in
+                        { model | todos = newtodos } ! [ cmd ]
 
 
 
@@ -200,14 +182,14 @@ viewListElem todo =
             [ Style.todo__chkbox
             , type_ "checkbox"
             , checked todo.done
-            , onClick (TodoMsg << ToggleTodo <| todo.id)
+            , onClick (ToggleTodo todo.id)
             ]
             []
         , div [] [ text todo.value ]
         , button
             [ Style.form__btn
             , Style.flex__right
-            , onClick (TodoMsg << DelTodo <| todo.id)
+            , onClick (DelTodo todo.id)
             , disabled (not todo.done)
             ]
             [ text "Delete" ]
@@ -217,7 +199,7 @@ viewListElem todo =
 viewFooter : Html Msg
 viewFooter =
     div [ Style.footer ]
-        [ text "Copyright (C) 2018 Yahoo Japan Corporation. All Rights Reserved." ]
+        [ text "This is a nice footer." ]
 
 
 
@@ -230,5 +212,5 @@ main =
         { init = init
         , view = view
         , update = update
-        , subscriptions = subscriptions
+        , subscriptions = \_ -> Sub.none
         }

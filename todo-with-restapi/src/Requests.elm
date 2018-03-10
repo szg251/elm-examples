@@ -61,7 +61,7 @@ fetchTodos =
         endpoints.fetchTodos
         Nothing
         todosDecoder
-        (ApiMsg << AfterFetchTodos)
+        AfterFetchTodos
 
 
 putNewTodo : Todo -> Cmd Msg
@@ -70,7 +70,7 @@ putNewTodo newtodo =
         endpoints.putNewTodo
         (Just (todoEncoder newtodo))
         todoDecoder
-        (ApiMsg << AfterPutNewTodo newtodo.id)
+        (AfterPutNewTodo newtodo.id)
 
 
 patchTodo : Todo -> Cmd Msg
@@ -79,7 +79,7 @@ patchTodo todo =
         endpoints.patchTodo
         (Just (todoEncoder todo))
         todoDecoder
-        (ApiMsg << AfterPatchTodo)
+        (\_ -> NoOp)
 
 
 deleteTodo : String -> Cmd Msg
@@ -88,4 +88,4 @@ deleteTodo todoId =
         endpoints.deleteTodo
         (Just (idEncoder todoId))
         todosDecoder
-        (ApiMsg << AfterDeleteTodo)
+        (\_ -> NoOp)
