@@ -159,7 +159,7 @@ viewListElem { key, word, done } =
 viewFooter : Html Msg
 viewFooter =
     div [ Style.footer ]
-        [ text "Copyright (C) 2018 Yahoo Japan Corporation. All Rights Reserved." ]
+        [ text "This is a nice footer" ]
 
 
 main : Program Never Model Msg
