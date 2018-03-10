@@ -2,9 +2,15 @@
 
 A few simple applications written in Elm.
 
+## Minimalist Todo App
+
+Simplest todo application without any styling.
+
+`/minimalist-todo`
+
 ## Todo App
 
-A simple todo application
+A simple todo application, with elm-css
 
 `/todo`
 
