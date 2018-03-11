@@ -6,11 +6,15 @@ A few simple applications written in Elm.
 
 Simplest todo application without any styling.
 
+### Get started with Elm
+
+`npm i -g elm elm-live elm-format`
+
 `/minimalist-todo`
 
 ### Get started
 
-Run the project with `elm-reactor` or `elm-live ./src/App.elm`.
+Run the project with `elm-reactor` or `elm-live ./App.elm`.
 
 ## Todo App
 
