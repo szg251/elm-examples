@@ -10,16 +10,11 @@ import Result
 decoderTests : Test
 decoderTests =
     describe "Decoders"
-        [ testTodosDecoder ]
-
-
-testTodosDecoder : Test
-testTodosDecoder =
-    test "todosDecoder" <|
-        \_ ->
-            let
-                testJson =
-                    """
+        [ test "todosDecoder" <|
+            \_ ->
+                let
+                    testJson =
+                        """
                     [
                         {
                             "id": "123",
@@ -34,19 +29,20 @@ testTodosDecoder =
                     ]
                     """
 
-                expectedData =
-                    Result.Ok
-                        [ { id = "123"
-                          , value = "val"
-                          , done = False
-                          }
-                        , { id = "234"
-                          , value = "valb"
-                          , done = True
-                          }
-                        ]
+                    expectedData =
+                        Result.Ok
+                            [ { id = "123"
+                              , value = "val"
+                              , done = False
+                              }
+                            , { id = "234"
+                              , value = "valb"
+                              , done = True
+                              }
+                            ]
 
-                decoded =
-                    Decode.decodeString todosDecoder testJson
-            in
-                Expect.equal expectedData decoded
+                    decoded =
+                        Decode.decodeString todosDecoder testJson
+                in
+                    Expect.equal expectedData decoded
+        ]
