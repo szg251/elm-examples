@@ -2,7 +2,23 @@ module Style exposing (..)
 
 import Css exposing (..)
 import Html.Styled.Attributes exposing (css)
-import Style.Colors exposing (..)
+
+
+{- Colors -}
+
+
+colors =
+    { mainBg = hex "3498db"
+    , mainFg = hex "fff"
+    , formBg = hex "eee"
+    , formFg = hex "808080"
+    , formHoverBg = hex "f00"
+    , formHoverFg = hex "fff"
+    , formDisabledBg = hex "eee"
+    , formDisabledFg = hex "d3d3d3"
+    , borders = hex "eee"
+    }
+
 
 
 {- Base -}
@@ -34,7 +50,7 @@ nav =
     css
         [ width (vw 100)
         , fontWeight bold
-        , backgroundColor mainBg
+        , backgroundColor colors.mainBg
         , padding (Css.rem 0.5)
         ]
 
@@ -50,7 +66,7 @@ nav__container =
 
 nav__title =
     css
-        [ color mainFg
+        [ color colors.mainFg
         , fontFamilies [ "Arial", "sans-serif" ]
         , margin (px 0)
         , fontSize (Css.rem 2)
@@ -68,7 +84,7 @@ form =
 formElement =
     batch
         [ height (Css.rem 2)
-        , backgroundColor formBg
+        , backgroundColor colors.formBg
         , borderStyle none
         ]
 
@@ -77,22 +93,22 @@ form__txt =
     css
         [ formElement
         , padding2 (px 0) (Css.rem 0.5)
-        , color formFg
+        , color colors.formFg
         ]
 
 
 form__btn =
     css
         [ formElement
-        , color formFg
+        , color colors.formFg
         , padding (px 5)
         , hover
-            [ backgroundColor formHoverBg
-            , color formHoverFg
+            [ backgroundColor colors.formHoverBg
+            , color colors.formHoverFg
             ]
         , disabled
-            [ backgroundColor formDisabledBg
-            , color formDisabledFg
+            [ backgroundColor colors.formDisabledBg
+            , color colors.formDisabledFg
             ]
         ]
 
@@ -117,7 +133,7 @@ title =
 todo__li =
     css
         [ listStyle none
-        , borderBottom3 (px 1) solid borders
+        , borderBottom3 (px 1) solid colors.borders
         , displayFlex
         , alignItems left
         ]
