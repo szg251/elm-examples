@@ -82,7 +82,7 @@ patchTodo todo =
         (\_ -> NoOp)
 
 
-deleteTodo : String -> Cmd Msg
+deleteTodo : Int -> Cmd Msg
 deleteTodo todoId =
     mkRequest
         endpoints.deleteTodo

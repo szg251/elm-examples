@@ -10,7 +10,7 @@ import Json.Encode as Encode
 
 
 type alias Todo =
-    { id : String
+    { id : Int
     , value : String
     , done : Bool
     }
@@ -41,7 +41,7 @@ todosDecoder =
 todoDecoder : Decode.Decoder Todo
 todoDecoder =
     P.decode Todo
-        |> P.required "id" Decode.string
+        |> P.required "id" Decode.int
         |> P.required "value" Decode.string
         |> P.required "done" Decode.bool
 
@@ -54,7 +54,7 @@ todoEncoder : Todo -> Encode.Value
 todoEncoder todo =
     let
         attributes =
-            [ ( "id", Encode.string todo.id )
+            [ ( "id", Encode.int todo.id )
             , ( "value", Encode.string todo.value )
             , ( "done", Encode.bool todo.done )
             ]
@@ -62,6 +62,6 @@ todoEncoder todo =
         Encode.object attributes
 
 
-idEncoder : String -> Encode.Value
+idEncoder : Int -> Encode.Value
 idEncoder todoId =
-    Encode.object [ ( "id", Encode.string todoId ) ]
+    Encode.object [ ( "id", Encode.int todoId ) ]

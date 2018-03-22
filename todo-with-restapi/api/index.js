@@ -2,7 +2,6 @@ const express    = require('express')
 const bodyParser = require('body-parser')
 const fs         = require('fs-extra')
 const path       = require('path')
-const shortid    = require('shortid')
 const app        = express()
 
 app.use(bodyParser.urlencoded({
@@ -47,9 +46,8 @@ app.put('/todo', (req, res) => {
     done: false,
   })
 
-  const generateUniqueId = (values = []) => {
-    const newId = shortid.generate()
-    return values.includes(newId) ? generateUniqueId(values) : newId
+  const generateUniqueId = (values = [], tryId = 0) => {
+    return values.includes(tryId) ? generateUniqueId(values, tryId + 1) : tryId
   }
 
   fs.readJson(path.resolve(__dirname, 'todos.json'))
@@ -72,7 +70,8 @@ app.put('/todo', (req, res) => {
 app.delete('/todo', (req, res) => {
   fs.readJson(path.resolve(__dirname, 'todos.json'))
     .then(todos => {
-      const newList = todos.filter(todo => todo.id !== req.body.id)
+      const delId = parseInt(req.body.id)
+      const newList = todos.filter(todo => todo.id !== delId)
       const success = newList.length !== todos.length
 
       if (success) {

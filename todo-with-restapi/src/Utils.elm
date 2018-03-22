@@ -1,13 +1,13 @@
 module Utils exposing (..)
 
 
-uniqueId : List String -> String
+uniqueId : List Int -> Int
 uniqueId list =
     let
-        uniqueId_ : Int -> String
+        uniqueId_ : Int -> Int
         uniqueId_ newId =
-            if List.all (\id -> id /= (toString newId)) list then
-                toString newId
+            if List.all (\id -> id /= (newId)) list then
+                newId
             else
                 uniqueId_ (newId + 1)
     in

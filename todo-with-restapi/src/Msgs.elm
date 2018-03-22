@@ -11,7 +11,7 @@ type Msg
     = NoOp
     | InputTodoField String
     | SubmitTodo String
-    | DelTodo String
-    | ToggleTodo String
+    | DelTodo Int
+    | ToggleTodo Int
     | AfterFetchTodos (WebData (List Todo))
-    | AfterPutNewTodo String (WebData Todo)
+    | AfterPutNewTodo Int (WebData Todo)
