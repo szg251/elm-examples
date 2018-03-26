@@ -67,10 +67,10 @@ app.put('/todo', (req, res) => {
 
 // DELETE /todo
 // Delete a todo from the database
-app.delete('/todo', (req, res) => {
+app.delete('/todo/:todoid', (req, res) => {
   fs.readJson(path.resolve(__dirname, 'todos.json'))
     .then(todos => {
-      const delId = parseInt(req.body.id)
+      const delId = parseInt(req.params.todoid)
       const newList = todos.filter(todo => todo.id !== delId)
       const success = newList.length !== todos.length
 
@@ -86,11 +86,11 @@ app.delete('/todo', (req, res) => {
 
 // PATCH /todo
 // Modifiy a todo
-app.patch('/todo', (req, res) => {
+app.patch('/todo/:todoid', (req, res) => {
   fs.readJson(path.resolve(__dirname, 'todos.json'))
     .then(todos => {
-      const newList = todos.map(todo => todo.id === req.body.id
-        ? Object.assign({}, todo, {done: req.body.done})
+      const newList = todos.map(todo => todo.id === parseInt(req.params.todoid)
+        ? { id: todo.id, value: req.body.value, done: req.body.done }
         : todo
       )
       fs.writeJson(path.resolve(__dirname, 'todos.json'), newList)

@@ -22,14 +22,6 @@ apiHost =
     "http://localhost:3030"
 
 
-endpoints =
-    { fetchTodos = ( "/todo", "GET" )
-    , putNewTodo = ( "/todo", "PUT" )
-    , deleteTodo = ( "/todo", "DELETE" )
-    , patchTodo = ( "/todo", "PATCH" )
-    }
-
-
 mkRequest ( endpoint, method ) maybeBody decoder msg =
     let
         body =
@@ -58,7 +50,7 @@ mkRequest ( endpoint, method ) maybeBody decoder msg =
 fetchTodos : Cmd Msg
 fetchTodos =
     mkRequest
-        endpoints.fetchTodos
+        ( "/todo", "GET" )
         Nothing
         todosDecoder
         AfterFetchTodos
@@ -67,7 +59,7 @@ fetchTodos =
 putNewTodo : Todo -> Cmd Msg
 putNewTodo newtodo =
     mkRequest
-        endpoints.putNewTodo
+        ( "/todo", "PUT" )
         (Just (todoEncoder newtodo))
         todoDecoder
         (AfterPutNewTodo newtodo.id)
@@ -76,7 +68,7 @@ putNewTodo newtodo =
 patchTodo : Todo -> Cmd Msg
 patchTodo todo =
     mkRequest
-        endpoints.patchTodo
+        ( "/todo/" ++ (toString (todo.id)), "PATCH" )
         (Just (todoEncoder todo))
         todoDecoder
         (\_ -> NoOp)
@@ -85,7 +77,7 @@ patchTodo todo =
 deleteTodo : Int -> Cmd Msg
 deleteTodo todoId =
     mkRequest
-        endpoints.deleteTodo
-        (Just (idEncoder todoId))
+        ( "/todo/" ++ (toString todoId), "DELETE" )
+        (Nothing)
         todosDecoder
         (\_ -> NoOp)
