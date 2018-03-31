@@ -1,27 +1,14 @@
 const path                  = require('path');
 const CleanWebpackPlugin    = require('clean-webpack-plugin');
 const HtmlWebpackPlugin     = require('html-webpack-plugin');
-const UglifyJSWebpackPlugin = require('uglifyjs-webpack-plugin');
 
 const cleanPlugin    = new CleanWebpackPlugin('dist');
 const htmlPlugin     = new HtmlWebpackPlugin({
     title : 'Todo App',
     template : 'src/index.html'
 });
-const uglifyjsPlugin = new UglifyJSWebpackPlugin();
 
-const isProduction = process.env.NODE_ENV === 'production';
-
-module.exports = {
-    entry : {
-        app : './src/index.js',
-    },
-
-    output : {
-        path : path.join(__dirname, 'dist'),
-        filename : '[name].js',
-    },
-
+module.exports = (env, argv) => ({
     module : {
         rules : [
             {
@@ -33,7 +20,7 @@ module.exports = {
                 use : {
                     loader: 'elm-webpack-loader',
                     options: {
-                        debug: !isProduction,
+                        debug: argv.mode === 'development',
                     },
                 },
             },
@@ -42,16 +29,14 @@ module.exports = {
                 use  : ['style-loader', 'css-loader' ],
             },
         ],
-
-        noParse : /\.elm$/,
     },
 
-    plugins: isProduction
-        ? [cleanPlugin, htmlPlugin, uglifyjsPlugin]
+    plugins: argv.mode === 'production'
+        ? [cleanPlugin, htmlPlugin]
         : [htmlPlugin]
     ,
 
     devServer : {
         port : 8000,
     },
-}
+});
