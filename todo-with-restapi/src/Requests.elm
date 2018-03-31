@@ -10,7 +10,7 @@ import Http exposing (..)
 import RemoteData exposing (WebData)
 import Model exposing (..)
 import Msgs exposing (..)
-import Json.Decode exposing (Decoder)
+import Json.Decode exposing (Decoder, Value)
 
 
 type alias Endpoint =
@@ -22,6 +22,7 @@ apiHost =
     "http://localhost:3030"
 
 
+mkRequest : Endpoint -> Maybe Value -> Decoder a -> (WebData a -> Msg) -> Cmd Msg
 mkRequest ( endpoint, method ) maybeBody decoder msg =
     let
         body =
@@ -59,8 +60,8 @@ fetchTodos =
 putNewTodo : Todo -> Cmd Msg
 putNewTodo newtodo =
     mkRequest
-        ( "/todo", "PUT" )
-        (Just (todoEncoder newtodo))
+        ( "/todo", "POST" )
+        (Just <| todoEncoder newtodo)
         todoDecoder
         (AfterPutNewTodo newtodo.id)
 
@@ -68,8 +69,8 @@ putNewTodo newtodo =
 patchTodo : Todo -> Cmd Msg
 patchTodo todo =
     mkRequest
-        ( "/todo/" ++ (toString (todo.id)), "PATCH" )
-        (Just (todoEncoder todo))
+        ( "/todo/" ++ (toString (todo.id)), "PUT" )
+        (Just <| todoEncoder todo)
         todoDecoder
         (\_ -> NoOp)
 

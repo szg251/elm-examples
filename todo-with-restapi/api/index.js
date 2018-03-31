@@ -37,9 +37,9 @@ app.get('/todo', (req, res) => {
     })
 })
 
-// PUT /todo
+// POST /todo
 // Insert a new todo to the database
-app.put('/todo', (req, res) => {
+app.post('/todo', (req, res) => {
   const mkTodo = (id) => ({
     id,
     value: req.body.value,
@@ -84,9 +84,9 @@ app.delete('/todo/:todoid', (req, res) => {
     })
 })
 
-// PATCH /todo
+// PUT /todo
 // Modifiy a todo
-app.patch('/todo/:todoid', (req, res) => {
+app.put('/todo/:todoid', (req, res) => {
   fs.readJson(path.resolve(__dirname, 'todos.json'))
     .then(todos => {
       const newList = todos.map(todo => todo.id === parseInt(req.params.todoid)
