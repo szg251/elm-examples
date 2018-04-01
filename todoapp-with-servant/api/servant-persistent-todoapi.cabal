@@ -1,0 +1,125 @@
+-- This file has been generated from package.yaml by hpack version 0.20.0.
+--
+-- see: https://github.com/sol/hpack
+--
+-- hash: 0c5444cf6be5c42bf5af7eb5c1e7ca2a7c4cf33aff0ea263d81b1696b2146a30
+
+name:           servant-persistent-todoapi
+version:        0.1.0.0
+description:    Please see the README on Github at <https://github.com/gege251/servant-persitent-todoapi#readme>
+homepage:       https://github.com/gege251/servant-persistent-todoapi#readme
+bug-reports:    https://github.com/gege251/servant-persistent-todoapi/issues
+author:         Szabo Gergely
+copyright:      2018 Szabo Gergely
+license:        BSD3
+build-type:     Simple
+cabal-version:  >= 1.10
+
+source-repository head
+  type: git
+  location: https://github.com/gege251/servant-persistent-todoapi
+
+library
+  hs-source-dirs:
+      src
+  ghc-options: -Wall
+  build-depends:
+      aeson
+    , base
+    , bytestring
+    , elm-export
+    , monad-logger
+    , mtl
+    , persistent
+    , persistent-sqlite
+    , persistent-template
+    , resource-pool
+    , servant
+    , servant-docs
+    , servant-elm
+    , servant-server <=0.13
+    , text
+    , transformers
+    , unliftio-core
+    , wai
+    , wai-cors
+    , warp
+  exposed-modules:
+      Api
+      App
+      CodeGens.Docs
+      CodeGens.Elm
+      Config
+      Models.ApiModel
+      Models.DbModel
+      TodoActions
+      Utils
+  other-modules:
+      Paths_servant_persistent_todoapi
+  default-language: Haskell2010
+
+executable servant-persistent-todoapi
+  main-is: exe/Main.hs
+  ghc-options: -Wall
+  build-depends:
+      aeson
+    , base
+    , bytestring
+    , elm-export
+    , monad-logger
+    , mtl
+    , persistent
+    , persistent-sqlite
+    , persistent-template
+    , resource-pool
+    , servant
+    , servant-docs
+    , servant-elm
+    , servant-persistent-todoapi
+    , servant-server <=0.13
+    , text
+    , transformers
+    , unliftio-core
+    , wai
+    , wai-cors
+    , warp
+  other-modules:
+      Paths_servant_persistent_todoapi
+  default-language: Haskell2010
+
+test-suite spec
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  hs-source-dirs:
+      test
+  ghc-options: -Wall
+  build-depends:
+      aeson
+    , base
+    , bytestring
+    , elm-export
+    , hspec
+    , http-client
+    , http-types
+    , monad-logger
+    , mtl
+    , persistent
+    , persistent-sqlite
+    , persistent-template
+    , resource-pool
+    , servant
+    , servant-client
+    , servant-docs
+    , servant-elm
+    , servant-persistent-todoapi
+    , servant-server <=0.13
+    , text
+    , transformers
+    , unliftio-core
+    , wai
+    , wai-cors
+    , warp
+  other-modules:
+      AppSpec
+      Paths_servant_persistent_todoapi
+  default-language: Haskell2010
