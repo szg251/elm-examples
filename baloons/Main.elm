@@ -120,7 +120,7 @@ view model =
             [ width (toString model.windowSize.width)
             , height (toString model.windowSize.height)
             ]
-            (List.map drawCircle model.baloons)
+            (List.map drawCircle (Maybe.Extra.toList model.newBaloon ++ model.baloons))
 
 
 main =
