@@ -1,6 +1,7 @@
 module Main exposing (main)
 
 import Html exposing (Html, program)
+import Maybe.Extra
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Mouse exposing (Position)
@@ -8,19 +9,21 @@ import Time exposing (Time, second)
 
 
 type alias Model =
-    { baloons : List Baloon }
+    { circles : List Baloon, newBaloon : Maybe Baloon }
 
 
 type alias Baloon =
     { position : Position
-    , inertia : Int
+    , speed : Int
+    , size : Int
     }
 
 
 type Msg
     = NoOp
-    | Click Position
-    | Gravity Time
+    | MouseDown Position
+    | MouseUp Position
+    | Tick Time
 
 
 fallDown : Baloon -> Baloon
@@ -28,18 +31,23 @@ fallDown baloon =
     let
         newPosition =
             { x = baloon.position.x
-            , y = baloon.position.y + baloon.inertia
+            , y = baloon.position.y + baloon.speed
             }
 
-        newInertia =
-            Basics.min (baloon.inertia + 1) 20
+        newSpeed =
+            Basics.min (baloon.speed + 1) 20
     in
-        { baloon | position = newPosition, inertia = newInertia }
+        { baloon | position = newPosition, speed = newSpeed }
+
+
+outOfScreen : List Baloon -> List Baloon
+outOfScreen baloons =
+    List.filter (\{ position } -> position.x <= 1000 && position.y <= 1000) baloons
 
 
 initmodel : Model
 initmodel =
-    { baloons = [] }
+    { circles = [], newBaloon = Nothing }
 
 
 init : ( Model, Cmd msg )
@@ -53,24 +61,35 @@ update msg model =
         NoOp ->
             model ! [ Cmd.none ]
 
-        Click position ->
-            let
-                newBaloon =
-                    { position = position, inertia = 1 }
-            in
-                { model | baloons = newBaloon :: model.baloons }
-                    ! [ Cmd.none ]
-
-        Gravity time ->
-            { model | baloons = List.map fallDown model.baloons }
+        MouseDown position ->
+            { model | newBaloon = Just { position = position, speed = -5, size = 5 } }
                 ! [ Cmd.none ]
+
+        MouseUp position ->
+            { model
+                | circles = Maybe.Extra.toList (model.newBaloon) ++ model.circles
+                , newBaloon = Nothing
+            }
+                ! [ Cmd.none ]
+
+        Tick time ->
+            let
+                inflate baloon =
+                    { baloon | size = baloon.size + 1 }
+            in
+                { model
+                    | circles = List.map fallDown model.circles |> outOfScreen
+                    , newBaloon = Maybe.map inflate model.newBaloon
+                }
+                    ! [ Cmd.none ]
 
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
-        [ Mouse.clicks Click
-        , Time.every (second / 24) Gravity
+        [ Mouse.downs MouseDown
+        , Mouse.ups MouseUp
+        , Time.every (second / 24) Tick
         ]
 
 
@@ -78,18 +97,18 @@ view : Model -> Html Msg
 view model =
     svg
         [ width "1000", height "1000" ]
-        (viewCircles model.baloons)
+        (viewCircles (Maybe.Extra.toList model.newBaloon ++ model.circles))
 
 
 viewCircles : List Baloon -> List (Svg Msg)
 viewCircles circles =
     let
         drawCircle : Baloon -> Svg Msg
-        drawCircle { position } =
+        drawCircle { position, size } =
             circle
                 [ cx (toString position.x)
                 , cy (toString position.y)
-                , r "10"
+                , r (toString size)
                 , fill "green"
                 ]
                 []
