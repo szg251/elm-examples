@@ -32,8 +32,8 @@ type Msg
     | WindowResize Size
 
 
-fallDown : Baloon -> Baloon
-fallDown baloon =
+gravity : Baloon -> Baloon
+gravity baloon =
     let
         newPosition =
             { x = baloon.position.x
@@ -48,7 +48,7 @@ fallDown baloon =
 
 outOfScreen : Size -> List Baloon -> List Baloon
 outOfScreen window baloons =
-    List.filter (\{ position } -> position.y < window.height) baloons
+    List.filter (\{ position, size } -> position.y - size < window.height) baloons
 
 
 initmodel : Model
@@ -87,7 +87,10 @@ update msg model =
                     { baloon | size = baloon.size + 1 }
             in
                 { model
-                    | baloons = List.map fallDown model.baloons |> outOfScreen model.windowSize
+                    | baloons =
+                        model.baloons
+                            |> List.map gravity
+                            |> outOfScreen model.windowSize
                     , newBaloon = Maybe.map inflate model.newBaloon
                 }
                     ! [ Cmd.none ]
