@@ -19,7 +19,7 @@ type alias Model =
 
 type alias Baloon =
     { position : Position
-    , speed : Int
+    , heading : { x : Int, y : Int }
     , size : Int
     }
 
@@ -36,14 +36,16 @@ gravity : Baloon -> Baloon
 gravity baloon =
     let
         newPosition =
-            { x = baloon.position.x
-            , y = baloon.position.y + baloon.speed
+            { x = baloon.position.x + baloon.heading.x
+            , y = baloon.position.y + baloon.heading.y
             }
 
         newSpeed =
-            Basics.min (baloon.speed + 1) 20
+            { x = baloon.heading.x
+            , y = Basics.min (baloon.heading.y + 1) 20
+            }
     in
-        { baloon | position = newPosition, speed = newSpeed }
+        { baloon | position = newPosition, heading = newSpeed }
 
 
 outOfScreen : Size -> List Baloon -> List Baloon
@@ -71,15 +73,28 @@ update msg model =
             { model | windowSize = size } ! [ Cmd.none ]
 
         MouseDown position ->
-            { model | newBaloon = Just { position = position, speed = -5, size = 5 } }
+            { model | newBaloon = Just { position = position, heading = { x = 0, y = 0 }, size = 5 } }
                 ! [ Cmd.none ]
 
         MouseUp position ->
-            { model
-                | baloons = Maybe.Extra.toList model.newBaloon ++ model.baloons
-                , newBaloon = Nothing
-            }
-                ! [ Cmd.none ]
+            let
+                throwAway baloon =
+                    { baloon
+                        | heading =
+                            { x = (baloon.position.x - position.x) // 5
+                            , y = (baloon.position.y - position.y) // 5
+                            }
+                    }
+            in
+                { model
+                    | baloons =
+                        model.newBaloon
+                            |> Maybe.map throwAway
+                            |> Maybe.Extra.toList
+                            |> List.append model.baloons
+                    , newBaloon = Nothing
+                }
+                    ! [ Cmd.none ]
 
         Tick time ->
             let
