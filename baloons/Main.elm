@@ -1,7 +1,7 @@
 module Main exposing (main)
 
 import Html exposing (Html, program)
-import Maybe.Extra
+import Maybe.Extra as MaybeE
 import Svg exposing (..)
 import Svg.Attributes exposing (..)
 import Mouse exposing (Position)
@@ -13,6 +13,7 @@ import Task
 type alias Model =
     { baloons : List Baloon
     , newBaloon : Maybe Baloon
+    , arrow : Maybe Triangle
     , windowSize : Size
     }
 
@@ -24,9 +25,18 @@ type alias Baloon =
     }
 
 
+type alias Triangle =
+    { top : Position
+    , left : Position
+    , right : Position
+    , angle : Float
+    }
+
+
 type Msg
     = NoOp
     | MouseDown Position
+    | MouseMove Position
     | MouseUp Position
     | Tick Time
     | WindowResize Size
@@ -50,12 +60,20 @@ gravity baloon =
 
 outOfScreen : Size -> List Baloon -> List Baloon
 outOfScreen window baloons =
-    List.filter (\{ position, size } -> position.y - size < window.height) baloons
+    let
+        isIn { position, size } =
+            position.y - size < window.height && position.x - size < window.width
+    in
+        List.filter isIn baloons
 
 
 initmodel : Model
 initmodel =
-    { baloons = [], newBaloon = Nothing, windowSize = { width = 0, height = 0 } }
+    { baloons = []
+    , newBaloon = Nothing
+    , arrow = Nothing
+    , windowSize = { width = 0, height = 0 }
+    }
 
 
 init : ( Model, Cmd Msg )
@@ -73,8 +91,54 @@ update msg model =
             { model | windowSize = size } ! [ Cmd.none ]
 
         MouseDown position ->
-            { model | newBaloon = Just { position = position, heading = { x = 0, y = 0 }, size = 5 } }
+            { model
+                | newBaloon =
+                    Just
+                        { position = position
+                        , heading = { x = 0, y = 0 }
+                        , size = 5
+                        }
+                , arrow =
+                    Just
+                        { top = position
+                        , left = position
+                        , right = position
+                        , angle = 0
+                        }
+            }
                 ! [ Cmd.none ]
+
+        MouseMove position ->
+            let
+                moveBottom triangle =
+                    let
+                        distX =
+                            triangle.top.x - position.x
+
+                        distY =
+                            triangle.top.y - position.y
+
+                        angle =
+                            atan2 (toFloat distX) (toFloat distY)
+
+                        dist =
+                            sqrt (toFloat ((distX ^ 2) + (distY ^ 2)))
+                    in
+                        { triangle
+                            | left =
+                                { position
+                                    | x = triangle.top.x - round (sin (angle + 0.07) * dist / 1.5)
+                                    , y = triangle.top.y - round (cos (angle + 0.07) * dist / 1.5)
+                                }
+                            , right =
+                                { position
+                                    | x = triangle.top.x - round (sin (angle - 0.07) * dist / 1.5)
+                                    , y = triangle.top.y - round (cos (angle - 0.07) * dist / 1.5)
+                                }
+                        }
+            in
+                { model | arrow = Maybe.map moveBottom model.arrow }
+                    ! [ Cmd.none ]
 
         MouseUp position ->
             let
@@ -90,9 +154,10 @@ update msg model =
                     | baloons =
                         model.newBaloon
                             |> Maybe.map throwAway
-                            |> Maybe.Extra.toList
+                            |> MaybeE.toList
                             |> List.append model.baloons
                     , newBaloon = Nothing
+                    , arrow = Nothing
                 }
                     ! [ Cmd.none ]
 
@@ -115,6 +180,7 @@ subscriptions : Model -> Sub Msg
 subscriptions model =
     Sub.batch
         [ Mouse.downs MouseDown
+        , Mouse.moves MouseMove
         , Mouse.ups MouseUp
         , Time.every (second / 24) Tick
         , Window.resizes WindowResize
@@ -133,12 +199,34 @@ view model =
                 , fill "green"
                 ]
                 []
+
+        drawTriangle : Triangle -> Svg Msg
+        drawTriangle triangle =
+            let
+                toStringPoints { top, left, right } =
+                    String.join " "
+                        [ toStringPoint top, toStringPoint left, toStringPoint right ]
+
+                toStringPoint { x, y } =
+                    String.join ","
+                        [ toString x, toString y ]
+            in
+                polygon
+                    [ stroke "red"
+                    , strokeLinejoin "round"
+                    , strokeWidth "5"
+                    , fill "red"
+                    , points (toStringPoints triangle)
+                    ]
+                    []
     in
         svg
             [ width (toString model.windowSize.width)
             , height (toString model.windowSize.height)
             ]
-            (List.map drawCircle (Maybe.Extra.toList model.newBaloon ++ model.baloons))
+            ((Maybe.map drawTriangle model.arrow |> MaybeE.toList)
+                ++ List.map drawCircle (MaybeE.toList model.newBaloon ++ model.baloons)
+            )
 
 
 main =
