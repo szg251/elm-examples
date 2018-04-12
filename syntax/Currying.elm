@@ -5,12 +5,20 @@ import Html.Attributes exposing (..)
 
 
 main =
-    div [ style [ ( "backgroundColor", "blue" ), ( "color", "white" ) ] ] [ text "hey" ]
+    div []
+        [ div [ style [ ( "backgroundColor", "blue" ), ( "color", "white" ) ] ] [ text "simple" ]
+        , br [] []
+        , blueLine [ text "with children argument" ]
+        , br [] []
+        , blueLineCurried [ text "curried" ]
+        ]
 
 
+blueLine : List (Html msg) -> Html msg
+blueLine children =
+    div [ style [ ( "backgroundColor", "blue" ), ( "color", "white" ) ] ] children
 
--- main =
---     blueLine [ text "hey" ]
---
--- blueLine =
---     div [ style [ ( "backgroundColor", "blue" ), ( "color", "white" ) ] ]
+
+blueLineCurried : List (Html msg) -> Html msg
+blueLineCurried =
+    div [ style [ ( "backgroundColor", "blue" ), ( "color", "white" ) ] ]
