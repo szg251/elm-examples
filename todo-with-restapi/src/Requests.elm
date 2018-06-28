@@ -14,7 +14,7 @@ import Json.Decode exposing (Decoder, Value)
 
 
 type alias Endpoint =
-    ( String, String )
+    { method : String, path : List String }
 
 
 apiHost : String
@@ -22,22 +22,30 @@ apiHost =
     "http://localhost:3030"
 
 
-mkRequest : Endpoint -> Maybe Value -> Decoder a -> (WebData a -> Msg) -> Cmd Msg
-mkRequest ( endpoint, method ) maybeBody decoder msg =
-    let
-        body =
-            case maybeBody of
-                Just body ->
-                    Http.jsonBody body
+type alias RequestOptions a =
+    { action : Endpoint
+    , body : Maybe Value
+    , decoder : Decoder a
+    , onResponse : WebData a -> Msg
+    }
 
+
+mkRequest : RequestOptions a -> Cmd Msg
+mkRequest { action, body, decoder, onResponse } =
+    let
+        jsonBody =
+            case body of
                 Nothing ->
                     Http.emptyBody
 
+                Just requestBody ->
+                    Http.jsonBody requestBody
+
         options =
-            { method = method
+            { method = action.method
             , headers = []
-            , url = apiHost ++ endpoint
-            , body = body
+            , url = String.join "/" (apiHost :: action.path)
+            , body = jsonBody
             , expect = expectJson decoder
             , timeout = Nothing
             , withCredentials = False
@@ -45,40 +53,44 @@ mkRequest ( endpoint, method ) maybeBody decoder msg =
     in
         Http.request options
             |> RemoteData.sendRequest
-            |> Cmd.map msg
+            |> Cmd.map onResponse
 
 
 fetchTodos : Cmd Msg
 fetchTodos =
     mkRequest
-        ( "/todo", "GET" )
-        Nothing
-        todosDecoder
-        AfterFetchTodos
+        { action = { method = "GET", path = [ "todo" ] }
+        , body = Nothing
+        , decoder = todosDecoder
+        , onResponse = AfterFetchTodos
+        }
 
 
 putNewTodo : Todo -> Cmd Msg
 putNewTodo newtodo =
     mkRequest
-        ( "/todo", "POST" )
-        (Just <| todoEncoder newtodo)
-        todoDecoder
-        (AfterPutNewTodo newtodo.id)
+        { action = { method = "POST", path = [ "todo" ] }
+        , body = Just (todoEncoder newtodo)
+        , decoder = todoDecoder
+        , onResponse = (AfterPutNewTodo newtodo.id)
+        }
 
 
 patchTodo : Todo -> Cmd Msg
 patchTodo todo =
     mkRequest
-        ( "/todo/" ++ (toString (todo.id)), "PUT" )
-        (Just <| todoEncoder todo)
-        todoDecoder
-        (\_ -> NoOp)
+        { action = { method = "PUT", path = [ "todo", toString todo.id ] }
+        , body = Just (todoEncoder todo)
+        , decoder = todoDecoder
+        , onResponse = always NoOp
+        }
 
 
 deleteTodo : Int -> Cmd Msg
 deleteTodo todoId =
     mkRequest
-        ( "/todo/" ++ (toString todoId), "DELETE" )
-        (Nothing)
-        todosDecoder
-        (\_ -> NoOp)
+        { action = { method = "DELETE", path = [ "todo", toString todoId ] }
+        , body = Nothing
+        , decoder = todosDecoder
+        , onResponse = always NoOp
+        }
