@@ -28,9 +28,9 @@ initModel =
     , currentUser = Nothing
     , users =
         Dict.fromList
-            [ ( "gege251", { pass = "1234", roles = [ Admin ] } )
-            , ( "takeda", { pass = "2345", roles = [] } )
-            , ( "kovacs", { pass = "3456", roles = [] } )
+            [ ( "gege251", { pass = "1234", roles = [ Normal, Admin ] } )
+            , ( "takeda", { pass = "2345", roles = [ Normal ] } )
+            , ( "kovacs", { pass = "3456", roles = [ Normal ] } )
             ]
     , profiles =
         Dict.fromList
